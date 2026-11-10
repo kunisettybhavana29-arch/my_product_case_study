@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loan Management System: a business analysis case study</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Newsreader:wght@500;600&display=swap">
+<style>
+:root{--bg:#F2F4F6;--surf:#fff;--ink:#17212B;--mut:#5B6773;--line:#D5DBE1;--acc:#0E6B6B;--warn:#B77A0B;--bar:#0E6B6B;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12181E;--surf:#1A222A;--ink:#E7ECF0;--mut:#9AA6B1;--line:#2D3945;--acc:#5CC0C0;--warn:#E0A63A;--bar:#4FB3B3;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12181E;--surf:#1A222A;--ink:#E7ECF0;--mut:#9AA6B1;--line:#2D3945;--acc:#5CC0C0;--warn:#E0A63A;--bar:#4FB3B3;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Instrument Sans",system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:40px 20px 72px}
+h1,h2,h3{font-family:Newsreader,Georgia,serif;font-weight:600;line-height:1.2;margin:0}
+h1{font-size:clamp(2rem,5vw,3rem);margin-bottom:12px}
+h2{font-size:1.65rem;margin:56px 0 10px;padding-top:20px;border-top:1px solid var(--line)}
+h3{font-size:1.15rem;margin:26px 0 8px}
+p{margin:0 0 12px;max-width:68ch}
+.lead{font-size:1.15rem;color:var(--mut);max-width:62ch}
+.meta{color:var(--mut);font-size:.9rem;margin-top:14px}
+.note{border-left:3px solid var(--warn);padding:8px 14px;background:var(--surf);color:var(--mut);font-size:.9rem;margin:18px 0}
+table{border-collapse:collapse;width:100%;font-size:.92rem;background:var(--surf)}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{font-weight:600;background:color-mix(in srgb,var(--line) 45%,var(--surf))}
+.scroll{overflow-x:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.two{grid-template-columns:1fr}}
+.box{background:var(--surf);border:1px solid var(--line);padding:14px 16px}
+.box ol{margin:6px 0 0;padding-left:20px}.box li{margin-bottom:4px}
+pre{background:var(--surf);border:1px solid var(--line);padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;margin:8px 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
+.kpi{background:var(--surf);border:1px solid var(--line);padding:10px 12px}
+.kpi b{display:block;font:600 1.6rem Newsreader,Georgia,serif}
+.kpi span{color:var(--mut);font-size:.82rem}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.charts{grid-template-columns:1fr}}
+.chart{background:var(--surf);border:1px solid var(--line);padding:10px 12px}
+.chart h4{margin:0 0 6px;font-size:.9rem;font-weight:600}
+svg text{fill:var(--mut);font:10px "Instrument Sans",sans-serif}
+.wf{background:var(--surf);border:1.5px dashed var(--mut);padding:14px;font-size:.85rem;margin:10px 0}
+.wf .bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.wf .st{padding:3px 9px;border:1px solid var(--line);color:var(--mut)}.wf .st.on{border-color:var(--acc);color:var(--acc);font-weight:600}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.g{grid-template-columns:1fr}}
+.f{border:1px solid var(--line);padding:6px 9px;color:var(--mut);min-height:32px}
+.f i{display:block;font-style:normal;font-size:.72rem;color:var(--ink);font-weight:600}
+.btn{display:inline-block;border:1.5px solid var(--ink);padding:5px 14px;margin:10px 8px 0 0;font-weight:600}
+.btn.p{background:var(--ink);color:var(--bg)}
+.chip{display:inline-block;padding:2px 8px;border:1px solid var(--acc);color:var(--acc);margin:2px 4px 2px 0;font-size:.78rem}
+.chip.w{border-color:var(--warn);color:var(--warn)}
+.ann{color:var(--warn);font-size:.78rem;margin-top:8px}
+a{color:var(--acc)}
+</style></head><body><main>
+
+<h1>Loan Management System: a business analysis case study</h1>
+<p class="lead">I took a fictional lender that runs loans on spreadsheets and email, worked out what was going wrong, and designed the system that should replace it, from the first interview question to the last UAT test case.</p>
+<p class="meta">By Bhavana · Business analysis portfolio · Client: Meridian Finance (fictional retail NBFC)</p>
+<div class="note">Meridian is invented, and so are the numbers. Baselines and targets are assumptions I set to make the analysis concrete. The dashboard and SQL results come from a sample database I generated (420 applications, 334 loans), not real borrowers.</div>
+
+<h2>The problem</h2>
+<p>Meridian lends through branches and agents (DSAs). Applications are keyed in twice, KYC is checked by hand, approvals travel by email, and collections run off a spreadsheet. The result, in my baseline: loans take about 9 working days to disburse, 38% of applicants drop off before a decision, 14% of files need rework, and the portfolio at risk (PAR 30) sits at 11.5%.</p>
+<h3>What I set out to change</h3>
+<div class="scroll"><table>
+<tr><th>Goal</th><th>Baseline</th><th>Target</th></tr>
+<tr><td>Application to disbursal time</td><td>9 days</td><td>3 days</td></tr>
+<tr><td>Drop-off before decision</td><td>38%</td><td>20%</td></tr>
+<tr><td>Data-entry errors</td><td>14% of files</td><td>under 3%</td></tr>
+<tr><td>Collection efficiency</td><td>88%</td><td>95%</td></tr>
+<tr><td>PAR 30</td><td>11.5%</td><td>8%</td></tr>
+</table></div>
+
+<h2>Who I talked to, and what each needs</h2>
+<div class="scroll"><table>
+<tr><th>Stakeholder</th><th>What they care about</th><th>How I’d work with them</th></tr>
+<tr><td>COO (sponsor)</td><td>Speed, cost, growth</td><td>Monthly steering review</td></tr>
+<tr><td>Chief Risk Officer</td><td>Credit rules, PAR</td><td>Owns the approval matrix; signs off on rules</td></tr>
+<tr><td>Underwriters, RMs, collections</td><td>One clear screen, fewer re-keys, worklists that make sense</td><td>Workshops and UAT</td></tr>
+<tr><td>Compliance and audit</td><td>KYC evidence, audit trail</td><td>Review at each requirements gate</td></tr>
+<tr><td>IT</td><td>Integrations, security</td><td>Technical walkthroughs</td></tr>
+</table></div>
+
+<h2>Requirements</h2>
+<p>The full BRD (15 business requirements, prioritised with MoSCoW), FRD (19 functional requirements, 7 business rules, 6 non-functional requirements), 10 user stories with Given/When/Then criteria and a traceability matrix are in the written document:
+<a href="https://claude.ai/artifact/FKifbrAhtNSnYSzLnxygTg">read the full BRD and FRD</a>.</p>
+<h3>Three business rules that shaped the design</h3>
+<p>FOIR (existing plus new EMIs as a share of net income) cannot exceed 50%. Loans up to ₹3 lakh with a score of 750+ and FOIR of 40% or less can be approved without a human. Anything above ₹5 lakh goes to a senior underwriter, and above ₹15 lakh to a credit committee.</p>
+<h3>One story, in full</h3>
+<div class="box"><b>US-05: Approve, reject or refer back.</b> As an underwriter, I want to record a decision with a reason so decisions are consistent and auditable.
+<ul><li><i>Given</i> a loan within my limit, <i>when</i> I approve, <i>then</i> the status becomes Approved and a sanction letter is generated.</li>
+<li><i>Given</i> a loan above my limit, <i>then</i> it routes to the next approver automatically.</li>
+<li><i>Given</i> I reject or refer back without a reason code, <i>then</i> the system blocks the action.</li></ul></div>
+
+<h2>Process: before and after</h2>
+<div class="two">
+<div class="box"><b>As-is</b><ol><li>Customer fills a paper form; the branch re-types it into Excel</li><li>Back office checks KYC by hand (1–2 days)</li><li>Analyst pulls the bureau report and works out FOIR in a sheet</li><li>Approver reviews an email chain (2–3 days)</li><li>Finance disburses on an emailed OK, with no second check</li></ol></div>
+<div class="box"><b>To-be</b><ol><li>One digital application, validated as it is typed</li><li>e-KYC, bureau pull and FOIR run automatically</li><li>Rules engine approves, rejects or routes exceptions</li><li>Underwriter decides on a single screen; customer e-signs</li><li>Disbursement needs a maker and a different checker</li></ol></div>
+</div>
+
+<h2>Wireframes</h2>
+<h3>New application (relationship manager)</h3>
+<div class="wf"><div class="bar"><span class="st on">1 Applicant</span><span class="st">2 Employment</span><span class="st">3 Loan</span><span class="st">4 Documents</span><span class="st">5 Review</span></div>
+<div class="g"><div class="f"><i>Full name *</i>Priya Reddy</div><div class="f"><i>Date of birth *</i>DD/MM/YYYY</div>
+<div class="f"><i>PAN * (Verify)</i>ABCDE1234F</div><div class="f"><i>Mobile * (Send OTP)</i>98XXXXXX10</div>
+<div class="f"><i>Product *</i>Personal loan</div><div class="f"><i>Amount / tenure *</i>₹4,00,000 / 36 months</div></div>
+<div class="chip w" style="margin-top:10px">A loan for this PAN and mobile already exists: LN-2026-004512. View it.</div>
+<div class="f" style="margin-top:8px"><i>Estimated EMI</i>₹13,672 (updates as amount and tenure change)</div>
+<span class="btn">Save draft</span><span class="btn p">Next</span>
+<div class="ann">Duplicate check: FR-03. Required-field validation: FR-01. Application ID created on submit: FR-02.</div></div>
+
+<h3>Underwriter workbench</h3>
+<div class="wf"><b>LN-2026-004871</b> · Under review · SLA: 5h 20m left
+<div class="g" style="margin-top:10px"><div class="f"><i>Applicant</i>A. Kumar, 34 · income ₹85,000 · ABC Pvt Ltd<br>Loan ₹4,00,000 for 36 months</div>
+<div class="f"><i>Credit view</i>Bureau 712 · internal score 68/100<br>Existing EMIs ₹22,000 · new EMI ₹14,500 · FOIR 43% <span class="chip">within limit</span></div></div>
+<div style="margin-top:8px"><span class="chip">PAN verified</span><span class="chip">Aadhaar verified</span><span class="chip">Salary slips</span><span class="chip w">Bank statement missing</span></div>
+<div class="g" style="margin-top:10px"><div class="f"><i>Decision</i>◯ Approve ◯ Reject ◯ Refer back</div><div class="f"><i>Reason code *</i>Select…</div></div>
+<div class="ann">₹5L–₹15L band, so this routes to a senior underwriter (FR-08). Reject and refer back need a reason (FR-09). FOIR above 50% disables Approve (US-04).</div>
+<span class="btn p">Submit decision</span></div>
+
+<h2>SQL analysis</h2>
+<p>I built the schema in SQLite (five tables) and loaded simulated data so every query below actually runs. The sample data is described at the bottom of the page. The as-of date for overdue calculations is 31 Oct 2026.</p>
+<h3>Where do applications get lost? Conversion by channel</h3>
+<pre>SELECT channel, COUNT(*) AS applications,
+       SUM(status = 'Disbursed') AS disbursed,
+       ROUND(100.0 * SUM(status = 'Disbursed') / COUNT(*), 1) AS conversion_pct
+FROM loan_applications
+GROUP BY channel ORDER BY conversion_pct DESC;</pre>
+<div class="scroll"><table><tr><th>channel</th><th>applications</th><th>disbursed</th><th>conversion %</th></tr><tr><td>Branch</td><td>206</td><td>171</td><td>83.0</td></tr><tr><td>Web</td><td>68</td><td>54</td><td>79.4</td></tr><tr><td>DSA</td><td>146</td><td>109</td><td>74.7</td></tr></table></div>
+<p><b>What I’d take from this:</b> agent-sourced applications convert about 8 points lower than branch ones, which points to weaker pre-screening. A checklist at the point of capture (FR-01 and FR-05) is the first thing I’d test.</p>
+
+<h3>Is the monthly book growing? (LAG)</h3>
+<pre>WITH monthly AS (
+  SELECT strftime('%Y-%m', disbursal_date) AS month, SUM(disbursed_amount) AS disbursed
+  FROM loans GROUP BY 1)
+SELECT month, disbursed,
+       ROUND(100.0 * (disbursed - LAG(disbursed) OVER (ORDER BY month))
+             / LAG(disbursed) OVER (ORDER BY month), 1) AS mom_growth_pct
+FROM monthly;</pre>
+<p>Disbursement swings between ₹1.3 Cr (Jun) and ₹2.7 Cr (Feb) a month, with July up 73% on June. Large month-to-month swings like that are why I put the MoM measure on the executive page.</p>
+
+<h3>How much of the book is at risk? (PAR 30)</h3>
+<pre>WITH overdue AS (
+  SELECT DISTINCT loan_id FROM repayment_schedule
+  WHERE paid_amount &lt; emi_amount
+    AND julianday('2026-10-31') - julianday(due_date) &gt; 30)
+SELECT ROUND(100.0 * SUM(CASE WHEN o.loan_id IS NOT NULL
+                              THEN l.outstanding_principal END)
+             / SUM(l.outstanding_principal), 2) AS par30_pct
+FROM loans l LEFT JOIN overdue o ON o.loan_id = l.loan_id;</pre>
+<p>Result on the sample data: <b>7.98%</b> of a ₹15.1 Cr book. Of the 36 loans with an unpaid EMI, 18 are already past 90 days. That tail is where I’d point the collections team first.</p>
+
+<h3>Collection efficiency by month</h3>
+<pre>SELECT strftime('%Y-%m', due_date) AS month,
+       ROUND(100.0 * SUM(paid_amount) / SUM(emi_amount), 1) AS collection_eff_pct
+FROM repayment_schedule
+WHERE due_date &lt;= '2026-10-31'
+GROUP BY 1 ORDER BY 1;</pre>
+
+<h2>Dashboard</h2>
+<p>This is the executive page I designed for Power BI, drawn here with the sample data so you can see it without opening a file. The numbers match the SQL above.</p>
+<div class="kpis">
+<div class="kpi"><b>₹19.2 Cr</b><span>Disbursed, Jan–Oct</span></div>
+<div class="kpi"><b>80.4%</b><span>Approval rate</span></div>
+<div class="kpi"><b>5.4 days</b><span>Avg application to disbursal</span></div>
+<div class="kpi"><b>97.5%</b><span>Collection efficiency, Oct</span></div>
+<div class="kpi"><b>8.0%</b><span>PAR 30</span></div></div>
+<div class="charts">
+<div class="chart"><h4>Disbursed per month (₹ Cr)</h4><svg id="c1" viewBox="0 0 400 170" width="100%" role="img" aria-label="Monthly disbursement bar chart"></svg></div>
+<div class="chart"><h4>Collection efficiency (%)</h4><svg id="c2" viewBox="0 0 400 170" width="100%" role="img" aria-label="Collection efficiency line chart"></svg></div>
+<div class="chart"><h4>Overdue loans by days past due</h4><svg id="c3" viewBox="0 0 400 170" width="100%" role="img" aria-label="Overdue loans by bucket"></svg></div>
+<div class="chart"><h4>Conversion by channel (%)</h4><svg id="c4" viewBox="0 0 400 170" width="100%" role="img" aria-label="Conversion by channel"></svg></div>
+</div>
+<h3>The DAX behind it</h3>
+<p>One correction I made while checking my work: approval rate should only count applications that have been decided, and PAR 30 needs a days-past-due value per loan, which I supply from a SQL view.</p>
+<pre>-- SQL view feeding FactLoans[MaxDPD]
+CREATE VIEW vw_loan_dpd AS
+SELECT loan_id,
+       MAX(CASE WHEN paid_amount &lt; emi_amount
+                THEN julianday('now') - julianday(due_date) END) AS max_dpd
+FROM repayment_schedule WHERE due_date &lt; date('now') GROUP BY loan_id;</pre>
+<pre>Approval Rate % =
+DIVIDE(
+  CALCULATE(COUNTROWS(FactApplications),
+            FactApplications[Status] IN { "Approved", "Disbursed" }),
+  CALCULATE(COUNTROWS(FactApplications),
+            FactApplications[Status] &lt;&gt; "Submitted"))
+
+Avg TAT (Days) =
+AVERAGEX(
+  FILTER(FactApplications, NOT ISBLANK(FactApplications[DisbursalDate])),
+  DATEDIFF(FactApplications[ApplicationDate], FactApplications[DisbursalDate], DAY))
+
+Collection Efficiency % =
+DIVIDE(SUM(FactRepayments[PaidAmount]), SUM(FactRepayments[EmiAmount]))
+
+PAR 30 % =
+DIVIDE(
+  CALCULATE(SUM(FactLoans[OutstandingPrincipal]), FactLoans[MaxDPD] &gt; 30),
+  SUM(FactLoans[OutstandingPrincipal]))
+
+Disbursed MoM % =
+VAR Curr = [Total Disbursed]
+VAR Prev = CALCULATE([Total Disbursed], DATEADD(DimDate[Date], -1, MONTH))
+RETURN DIVIDE(Curr - Prev, Prev)</pre>
+<p>The report has four pages (executive summary, origination and turnaround, portfolio quality, collections) with branch, product and channel slicers, and row-level security so a branch manager sees only their branch.</p>
+
+<h2>UAT</h2>
+<p>I wrote 20 test scenarios tied back to the user stories. A sample:</p>
+<div class="scroll"><table>
+<tr><th>ID</th><th>Scenario</th><th>Expected result</th></tr>
+<tr><td>UAT-03</td><td>Submit an application with a PAN and mobile that already exist</td><td>Duplicate warning with a link to the existing record</td></tr>
+<tr><td>UAT-06</td><td>e-KYC vendor times out</td><td>Three retries, status stays KYC Pending, processor alerted</td></tr>
+<tr><td>UAT-08</td><td>Applicant with FOIR of 55%</td><td>Policy-breach flag; Approve disabled</td></tr>
+<tr><td>UAT-12</td><td>Maker tries to approve their own disbursement</td><td>Denied; a different checker is required</td></tr>
+<tr><td>UAT-14</td><td>Part-payment on an overdue EMI with penalty</td><td>Allocated to penalty, then interest, then principal; receipt issued</td></tr>
+<tr><td>UAT-18</td><td>Dashboard KPIs compared with SQL reconciliation</td><td>No variance; filters behave consistently</td></tr>
+</table></div>
+<p>Exit criteria: all critical scenarios passed, no open severity 1 or 2 defects, at least 95% overall pass rate, and sign-off from operations, risk, compliance, finance and the sponsor.</p>
+
+<h2 id="data">About the sample data</h2>
+<p>I generated it with a fixed random seed so results reproduce: <code>customers</code> (150), <code>loan_products</code> (3), <code>loan_applications</code> (420), <code>loans</code> (334) and <code>repayment_schedule</code>. Load the CSVs into Power BI, or open the SQLite file in DB Browser, to rerun everything above.</p>
+</main>
+<script>
+function ns(t,a){var e=document.createElementNS("http://www.w3.org/2000/svg",t);for(var k in a)e.setAttribute(k,a[k]);return e}
+function tx(s,x,y,t,an){var e=ns("text",{x:x,y:y,"text-anchor":an||"middle"});e.textContent=t;s.appendChild(e)}
+function bars(id,L,V,fmt,max){var s=document.getElementById(id),w=380/L.length,m=max||Math.max.apply(null,V)*1.15;
+V.forEach(function(v,i){var h=v/m*120,x=10+i*w+w*.15;s.appendChild(ns("rect",{x:x,y:140-h,width:w*.7,height:h,fill:"var(--bar)"}));tx(s,x+w*.35,134-h,fmt(v));tx(s,x+w*.35,156,L[i])})}
+function line(id,L,V){var s=document.getElementById(id),w=380/(L.length-1),lo=80,hi=100,p=[];
+V.forEach(function(v,i){p.push([15+i*(w-.7),140-(v-lo)/(hi-lo)*120])});
+s.appendChild(ns("polyline",{points:p.map(function(a){return a.join(",")}).join(" "),fill:"none",stroke:"var(--bar)","stroke-width":2}));
+p.forEach(function(a,i){s.appendChild(ns("circle",{cx:a[0],cy:a[1],r:3,fill:"var(--bar)"}));tx(s,a[0],a[1]-8,V[i].toFixed(0));tx(s,a[0],156,L[i])})}
+bars("c1",["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct"],[1.96,2.7,1.91,1.75,1.64,1.32,2.29,1.96,1.9,1.78],function(v){return v.toFixed(1)});
+line("c2",["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct"],[100,89.3,97.2,96.6,99.2,99,95.2,94.1,97.5]);
+bars("c3",["1–30","31–60","61–90","90+"],[5,5,8,18],function(v){return v});
+bars("c4",["Branch","Web","DSA"],[83,79.4,74.7],function(v){return v.toFixed(1)},100);
+</script></body></html>
